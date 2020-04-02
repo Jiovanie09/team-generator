@@ -4,32 +4,111 @@ const Intern = require("./lib/Intern");
 const inquirer = require("inquirer");
 const path = require("path");
 const fs = require("fs");
-​
+const render = require('./lib/htmlRenderer');
+
 const OUTPUT_DIR = path.resolve(__dirname, "output")
 const outputPath = path.join(OUTPUT_DIR, "team.html");
-​
-const render = require("./lib/htmlRenderer");
-​
-​
-// Write code to use inquirer to gather information about the development team members,
-// and to create objects for each team member (using the correct classes as blueprints!)
-​
-// After the user has input all employees desired, call the `render` function (required
-// above) and pass in an array containing all employee objects; the `render` function will
-// generate and return a block of HTML including templated divs for each employee!
-​
-// After you have your html, you're now ready to create an HTML file using the HTML
-// returned from the `render` function. Now write it to a file named `team.html` in the
-// `output` folder. You can use the variable `outputPath` above target this location.
-// Hint: you may need to check if the `output` folder exists and create it if it
-// does not.
-​
-// HINT: each employee type (manager, engineer, or intern) has slightly different
-// information; write your code to ask different questions via inquirer depending on
-// employee type.
-​
-// HINT: make sure to build out your classes first! Remember that your Manager, Engineer,
-// and Intern classes should all extend from a class named Employee; see the directions
-// for further information. Be sure to test out each class and verify it generates an 
-// object with the correct structure and methods. This structure will be crucial in order
-// for the provided `render` function to work!```
+
+let employees = []
+
+const confirm = 
+[{
+  message: 'add an employee',
+  type: 'confirm',
+  name: 'confirm'
+}]
+const questions = [
+  {
+    type: 'list',
+    name: 'role',
+    message: "role:",
+    choices: ['Manager', "Engineer", "Intern"]
+  },
+  {
+    type: 'input',
+    name: 'name',
+    message: 'what is your name'
+  },
+  {
+    type: 'input',
+    name: 'id',
+    message: 'what is your id',
+  },
+  {
+    type: "input",
+    name: "email",
+    message: "email"
+  }
+]
+const engineerQ = [
+  {
+    type: 'input',
+    name: 'github',
+    message: 'what is your github?'
+  }
+]
+const internQ = [
+  {
+    type: 'input',
+    name: 'officeNumber',
+    message: 'name of school?: '
+  }
+]
+const managerQ = [{
+  type:'input',
+  name:'officeNumber',
+  message:'office number?:'
+}]
+
+const engineer = async (data) => {
+  const res = await inquirer.prompt(engineerQ)
+  const e = new Engineer(data.name, data.id, data.email, res.github)
+  employees.push(e)
+  init()
+}
+
+const manager = async (data) => {
+  const res = await inquirer.prompt(managerQ)
+  const e = new Manager(data.name, data.id, data.email, res.officeNumber)
+  employees.push(e)
+  init()
+}
+
+const intern = async (data) => {
+  const res = await inquirer.prompt(internQ)
+  const e = new Intern(data.name, data.id, data.email, res.school)
+  employees.push(e)
+  init()
+}
+
+
+const exit = async (data) => {
+  //send data
+  render(data);
+  // create html)
+  fs.writeFile(outputPath, render(data),console.log);
+}
+
+const init = async () => {
+  const choice = await inquirer.prompt(confirm)
+  if (choice.confirm) {
+    const res = await inquirer.prompt(questions)
+    switch (res.role) {
+      case 'Manager':
+        return manager(res)
+      case 'Engineer':
+        return engineer(res)
+      case "Intern":
+        return intern(res)
+      default:
+        console.log('default')
+        break;
+    }
+  } else {
+    exit(employees)
+  }
+}
+
+
+init()
+
